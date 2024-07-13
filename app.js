@@ -52,7 +52,7 @@ app.post("/login", async (req, res) => {
 
   bcrypt.compare(password, user.password, function (err, result) {
     if (result) {
-      let token = jwt.sign({ email: email, userid: newUser._id }, "Shahwaiz");
+      let token = jwt.sign({ email: email, userid: user._id }, "Shahwaiz");
       res.cookie("token", token);
       res.status(200).send("Login successful");
     } else res.redirect("/");
@@ -63,8 +63,25 @@ app.get("/logout", (req, res) => {
   res.redirect("/login");
 });
 
+app.get("/profile", isLoggedIn, async (req, res) => {
+  let user = await userModel
+    .findOne({ email: req.user.email })
+    .populate("posts");
+  res.render("profile", { user });
+});
+
+app.post("/posts", isLoggedIn, async (req, res) => {
+  let user = await userModel.findOne({ email: req.user.email });
+  let post = await postModel.create({
+    user: user._id,
+    content: req.body.content,
+  });
+  user.posts.push(post._id);
+  await user.save();
+  res.redirect("/profile");
+});
 function isLoggedIn(req, res, next) {
-  if (req.cookies.token === "") res.send("You are not logged in");
+  if (req.cookies.token === "") res.redirect("/login");
   else {
     let data = jwt.verify(req.cookies.token, "Shahwaiz");
     req.user = data;
