@@ -54,7 +54,8 @@ app.post("/login", async (req, res) => {
     if (result) {
       let token = jwt.sign({ email: email, userid: user._id }, "Shahwaiz");
       res.cookie("token", token);
-      res.status(200).send("Login successful");
+      //res.status(200).send("Login successful");
+      res.redirect("/profile");
     } else res.redirect("/");
   });
 });
@@ -78,6 +79,31 @@ app.post("/posts", isLoggedIn, async (req, res) => {
   });
   user.posts.push(post._id);
   await user.save();
+  res.redirect("/profile");
+});
+
+app.get("/like/:id", isLoggedIn, async (req, res) => {
+  let post = await postModel.findById(req.params.id).populate("user");
+
+  //to first check if already liked
+  if (post.likes.indexOf(req.user.userid) === -1) {
+    post.likes.push(req.user.userid);
+  } else {
+    post.likes.splice(post.likes.indexOf(req.user.userid), 1); // to remove the user id from the likes array if already liked
+  }
+  await post.save();
+  res.redirect("/profile");
+});
+
+app.get("/edit/:id", isLoggedIn, async (req, res) => {
+  let post = await postModel.findById(req.params.id).populate("user");
+  res.render("edit", { post });
+});
+
+app.post("/update/:id", isLoggedIn, async (req, res) => {
+  let post = await postModel.findByIdAndUpdate(req.params.id, {
+    content: req.body.content,
+  });
   res.redirect("/profile");
 });
 function isLoggedIn(req, res, next) {
