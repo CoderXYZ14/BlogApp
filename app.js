@@ -12,7 +12,6 @@ app.set("view engine", "ejs");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
@@ -27,9 +26,6 @@ app.post("/upload", isLoggedIn, upload.single("image"), async (req, res) => {
   user.profilepic = req.file.filename;
   await user.save();
   res.redirect("/profile");
-});
-app.get("/login", (req, res) => {
-  res.render("login");
 });
 
 app.post("/register", async (req, res) => {
@@ -52,6 +48,10 @@ app.post("/register", async (req, res) => {
       res.send("Registration successful");
     });
   });
+});
+
+app.get("/login", (req, res) => {
+  res.render("login");
 });
 
 app.post("/login", async (req, res) => {
@@ -106,7 +106,7 @@ app.get("/like/:id", isLoggedIn, async (req, res) => {
 });
 
 app.get("/edit/:id", isLoggedIn, async (req, res) => {
-  let post = await postModel.findById(req.params.id).populate("user");
+  let post = await postModel.findById(req.params.id);
   res.render("edit", { post });
 });
 
